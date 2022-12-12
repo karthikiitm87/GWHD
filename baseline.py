@@ -36,12 +36,14 @@ from albumentations.pytorch import ToTensorV2
 
 
 # Pytorch import
-from pytorch_lightning.core.lightning import LightningModule
+from pytorch_lightning.core.module import LightningModule
+#from pytorch_lightning.core.lightning import LightningModule
 from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import Callback, ModelCheckpoint
 from pytorch_lightning.callbacks import LearningRateMonitor
 
 import torchvision
+from torchvision.models import ResNet50_Weights
 from torchvision.models.detection import FasterRCNN
 from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision.models.detection.rpn import RPNHead
@@ -186,9 +188,9 @@ class myDAFasterRCNN(LightningModule):
         self.n_classes = n_classes
         self.batchsize = batchsize
         self.n_vdomains = n_vdomains
-        self.detector = torchvision.models.detection.fasterrcnn_resnet50_fpn(min_size=1024, max_size=1024, pretrained_backbone=True) #Backbone trained on ImageNet               
-        in_features = self.detector.roi_heads.box_predictor.cls_score.in_features
-        self.detector.roi_heads.box_predictor = FastRCNNPredictor(in_features, n_classes)
+        self.detector = torchvision.models.detection.fasterrcnn_resnet50_fpn(n_classes = self.n_classes, min_size=1024, max_size=1024, weights_backbone=ResNet50_Weights.IMAGENET1K_V1)              
+        #in_features = self.detector.roi_heads.box_predictor.cls_score.in_features
+        #self.detector.roi_heads.box_predictor = FastRCNNPredictor(in_features, n_classes)
 
         
 	     
@@ -348,7 +350,7 @@ early_stop_callback= EarlyStopping(monitor='val_acc', min_delta=0.00, patience=1
 
 
 checkpoint_callback = ModelCheckpoint(monitor='val_loss', dirpath=NET_FOLDER, filename=weights_file)
-trainer = Trainer(gpus=1, max_epochs=100, deterministic=False, callbacks=[checkpoint_callback, early_stop_callback], reload_dataloaders_every_n_epochs=1)
+trainer = Trainer(accelerator='gpu', devices=1, max_epochs=100, deterministic=False, callbacks=[checkpoint_callback, early_stop_callback], reload_dataloaders_every_n_epochs=1)
 trainer.fit(detector, train_dataloaders = train_dataloader, val_dataloaders=val_dataloader)
 
 
