@@ -1,3 +1,11 @@
+# Setting up the environment
+We recommend to create a virtual environment and use the following command inside the virtual environemnt. Executing the following command will install the required libraries. 
+
+```
+pip install -r requirements.txt
+```
+
+
 # GWHD
 This repo has all the codes which we used for global wheat head detection 2021 challenge. Once all the dependencies are installed as mentioned in 'requirements.txt', the dataset can be downloaded by running the following script in the command prompt
 
