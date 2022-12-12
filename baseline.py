@@ -325,8 +325,9 @@ class myDAFasterRCNN(LightningModule):
       elif total_gt > 0 and total_pred == 0:
           return torch.tensor(0.).cuda()
           
-tr_dataset = WheatDataset('./datasets/Annots/official_train.csv', root_dir='./datasets/gwhd_2021/images/', image_set = 'train', transform=train_transform)
-vl_dataset = WheatDataset('./datasets/Annots/official_val.csv', root_dir='./datasets/gwhd_2021/images/', image_set = 'val', transform=valid_transform)
+tr_dataset = WheatDataset('../datasets/Annots/official_train.csv', root_dir='../datasets/gwhd_2021/images/', image_set = 'train', transform=train_transform)
+vl_dataset = WheatDataset('../datasets/Annots/official_val.csv', root_dir='../datasets/gwhd_2021/images/', image_set = 'val', transform=valid_transform)
+train_dataloader = torch.utils.data.DataLoader(tr_dataset, batch_size=2, shuffle=True,  collate_fn=collate_fn, num_workers=4)
 val_dataloader = torch.utils.data.DataLoader(vl_dataset, batch_size=1, shuffle=False,  collate_fn=collate_fn, num_workers=4)
 
            
@@ -347,13 +348,13 @@ early_stop_callback= EarlyStopping(monitor='val_acc', min_delta=0.00, patience=1
 
 
 checkpoint_callback = ModelCheckpoint(monitor='val_loss', dirpath=NET_FOLDER, filename=weights_file)
-trainer = Trainer(gpus=1, progress_bar_refresh_rate=1, max_epochs=100, deterministic=False, callbacks=[checkpoint_callback, early_stop_callback], reload_dataloaders_every_n_epochs=1)
-trainer.fit(detector, val_dataloaders=val_dataloader)
+trainer = Trainer(gpus=1, max_epochs=100, deterministic=False, callbacks=[checkpoint_callback, early_stop_callback], reload_dataloaders_every_n_epochs=1)
+trainer.fit(detector, train_dataloaders = train_dataloader, val_dataloaders=val_dataloader)
 
 
 detector.load_state_dict(torch.load(NET_FOLDER+'/'+weights_file+'.ckpt')['state_dict'])
 detector.freeze()
-test_dataset = WheatDataset('./datasets/Annots/official_test.csv', root_dir='./datasets/gwhd_2021/images/', image_set = 'test', transform=valid_transform)
+test_dataset = WheatDataset('../datasets/Annots/official_test.csv', root_dir='../datasets/gwhd_2021/images/', image_set = 'test', transform=valid_transform)
 
 detector.detector.eval()
 test_dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=1, shuffle=False, collate_fn=collate_fn, num_workers=4)
